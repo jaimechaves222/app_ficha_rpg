@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protocolo Septem – Sistema Completo Final (Teste)</title>
+
+<style>
+:root{--gold:#d4af37;--black:#000;--white:#f5f5f5}
+body{margin:0;font-family:Arial;background:var(--black);color:var(--white)}
+header{background:linear-gradient(90deg,var(--gold),#111);padding:20px;text-align:center;border-bottom:2px solid var(--gold)}
+h1{margin:0;color:#000}
+h2,h3{color:var(--gold)}
+.container{padding:20px}
+button{width:100%;padding:14px;margin-bottom:10px;background:var(--gold);color:#000;border:none;border-radius:8px;font-weight:bold}
+button.secondary{background:#111;color:var(--white);border:1px solid var(--gold)}
+button.danger{background:#400;color:#fff;border:1px solid #a00}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:15px}
+.char{
+ background:#111;border:2px solid var(--gold);border-radius:50%;
+ width:120px;height:120px;text-align:center;padding-top:10px;cursor:pointer
+}
+.char img{width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)}
+.card{background:#111;border:1px solid var(--gold);border-radius:10px;padding:15px;margin-bottom:15px;cursor:pointer}
+input,textarea,select{
+ width:100%;background:#000;color:var(--white);
+ border:1px solid var(--gold);border-radius:6px;padding:10px;margin-bottom:10px
+}
+img.big{width:100%;max-height:320px;object-fit:cover;border-radius:8px;margin-bottom:10px}
+.locked{opacity:.5}
+</style>
+</head>
+
+<body>
+<header>
+<h1>PROTOCOLO SEPTEM</h1>
+<p>Versão de Teste – Sistema Completo</p>
+</header>
+
+<div class="container">
+
+<!-- HOME -->
+<div class="page active" id="home">
+<button onclick="go('campanhas')">🎲 Entrar em Campanha</button>
+<button class="secondary" onclick="loginMestre()">🔒 Área do Mestre</button>
+</div>
+
+<!-- CAMPANHAS PLAYER -->
+<div class="page" id="campanhas">
+<h2>Campanhas</h2>
+<div id="listaCampanhas"></div>
+<button class="secondary" onclick="go('home')">⬅ Voltar</button>
+</div>
+
+<!-- MENU CAMPANHA -->
+<div class="page" id="sistema">
+<h2 id="campanhaNome"></h2>
+<button onclick="go('personagens')">🎭 Personagens</button>
+<button onclick="go('abas')">🗂️ Abas da Campanha</button>
+<button class="secondary" onclick="go('campanhas')">⬅ Sair</button>
+</div>
+
+<!-- PERSONAGENS PLAYER -->
+<div class="page" id="personagens">
+<h2>Personagens</h2>
+<div class="grid" id="listaPersonagens"></div>
+<button class="secondary" onclick="go('sistema')">⬅ Voltar</button>
+</div>
+
+<!-- FICHA -->
+<div class="page" id="ficha">
+<h2 id="fichaNome"></h2>
+<img id="fichaFoto" class="big">
+<div class="card"><b onclick="toggle('historia')">📜 História</b><p id="fichaHistoria" style="display:none"></p></div>
+<div class="card"><b onclick="toggle('pericias')">🎯 Perícias</b><ul id="fichaPericias" style="display:none"></ul></div>
+<div class="card"><b onclick="toggle('armas')">⚔️ Armas</b><ul id="fichaArmas" style="display:none"></ul></div>
+<button class="secondary" onclick="go('personagens')">⬅ Voltar</button>
+</div>
+
+<!-- ABAS PLAYER -->
+<div class="page" id="abas">
+<h2>Abas da Campanha</h2>
+<div id="listaAbas"></div>
+<button class="secondary" onclick="go('sistema')">⬅ Voltar</button>
+</div>
+
+<!-- ABA VIEW -->
+<div class="page" id="abaView">
+<h2 id="abaTitulo"></h2>
+<img id="abaImg" class="big">
+<p id="abaTexto"></p>
+<button class="secondary" onclick="go('abas')">⬅ Voltar</button>
+</div>
+
+<!-- MESTRE -->
+<div class="page" id="mestre">
+<h2>Área do Mestre</h2>
+<select id="campanhaSelect"></select>
+<button onclick="entrarMestre()">Entrar</button>
+
+<h3>Criar campanha</h3>
+<input id="novaCampanha" placeholder="Nome da campanha">
+<button onclick="criarCampanha()">Criar</button>
+<button class="secondary" onclick="go('home')">⬅ Voltar</button>
+</div>
+
+<!-- PAINEL MESTRE -->
+<div class="page" id="painelMestre">
+<h2 id="mestreCampanha"></h2>
+<button onclick="go('editarPersonagens')">✏️ Editar Personagens</button>
+<button onclick="go('editarAbas')">🗂️ Editar Abas</button>
+<button class="danger" onclick="apagarCampanha()">🗑️ Apagar Campanha</button>
+<button class="secondary" onclick="go('campanhas')">⬅ Sair</button>
+</div>
+
+<!-- EDITAR PERSONAGENS -->
+<div class="page" id="editarPersonagens">
+<h2>Editar Personagens</h2>
+<select id="personagemSelect"></select>
+<input id="pNome" placeholder="Nome">
+<textarea id="pHistoria" placeholder="História"></textarea>
+<textarea id="pPericias" placeholder="Perícias (uma por linha)"></textarea>
+<textarea id="pArmas" placeholder="Armas (uma por linha)"></textarea>
+<input type="file" accept="image/*" onchange="uploadFotoPersonagem(event)">
+<button onclick="salvarPersonagem()">Salvar</button>
+<button class="secondary" onclick="go('painelMestre')">⬅ Voltar</button>
+</div>
+
+<!-- EDITAR ABAS -->
+<div class="page" id="editarAbas">
+<h2>Editar Abas da Campanha</h2>
+<select id="abaSelect"></select>
+<input id="aTitulo" placeholder="Título">
+<textarea id="aTexto" placeholder="Texto"></textarea>
+<input type="file" accept="image/*" onchange="uploadFotoAba(event)">
+<input id="aSenha" placeholder="Senha da Aba (opcional)">
+<button onclick="salvarAba()">Salvar Aba</button>
+<button class="secondary" onclick="go('painelMestre')">⬅ Voltar</button>
+</div>
+
+</div>
+
+<script>
+const SENHA_MESTRE="Jaime";
+let campanhas=JSON.parse(localStorage.getItem("septem_campaigns"))||{};
+let atual=null;
+
+function template(){
+ return {
+  personagens:[
+   {nome:"Jogador I",historia:"",pericias:[],armas:[],foto:""},
+   {nome:"Jogador II",historia:"",pericias:[],armas:[],foto:""},
+   {nome:"Jogador III",historia:"",pericias:[],armas:[],foto:""},
+   {nome:"Jogador IV",historia:"",pericias:[],armas:[],foto:""},
+   {nome:"Jogador V",historia:"",pericias:[],armas:[],foto:""},
+   {nome:"Jogador VI",historia:"",pericias:[],armas:[],foto:""},
+   {nome:"Jogador VII",historia:"",pericias:[],armas:[],foto:""}
+  ],
+  abas:{
+   cenarios:{title:"Cenários",text:"",img:"",senha:""},
+   npcs:{title:"NPCs",text:"",img:"",senha:""},
+   pistas:{title:"Pistas",text:"",img:"",senha:""},
+   eventos:{title:"Eventos",text:"",img:"",senha:""},
+   segredos:{title:"Segredos",text:"",img:"",senha:""}
+  }
+ };
+}
+
+function save(){localStorage.setItem("septem_campaigns",JSON.stringify(campanhas));}
+
+function go(p){
+ document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+ document.getElementById(p).classList.add("active");
+ if(p==="campanhas")renderCampanhas();
+ if(p==="personagens")renderChars();
+ if(p==="abas")renderAbas();
+}
+
+function renderCampanhas(){
+ listaCampanhas.innerHTML="";
+ Object.keys(campanhas).forEach(k=>{
+  const d=document.createElement("div");
+  d.className="card";
+  d.textContent=k;
+  d.onclick=()=>{atual=k;campanhaNome.innerText=k;go('sistema')};
+  listaCampanhas.appendChild(d);
+ });
+}
+
+function renderChars(){
+ listaPersonagens.innerHTML="";
+ campanhas[atual].personagens.forEach((p,i)=>{
+  const d=document.createElement("div");
+  d.className="char";
+  d.innerHTML=`<img src="${p.foto||'https://via.placeholder.com/100'}"><div>${p.nome}</div>`;
+  d.onclick=()=>abrirFicha(i);
+  listaPersonagens.appendChild(d);
+ });
+}
+
+function abrirFicha(i){
+ const p=campanhas[atual].personagens[i];
+ fichaNome.innerText=p.nome;
+ fichaFoto.src=p.foto||"";
+ fichaHistoria.innerText=p.historia;
+ fichaPericias.innerHTML=p.pericias.map(x=>"<li>"+x+"</li>").join("");
+ fichaArmas.innerHTML=p.armas.map(x=>"<li>"+x+"</li>").join("");
+ go("ficha");
+}
+
+function renderAbas(){
+ listaAbas.innerHTML="";
+ Object.keys(campanhas[atual].abas).forEach(k=>{
+  const a=campanhas[atual].abas[k];
+  const d=document.createElement("div");
+  d.className="card "+(a.senha?"locked":"");
+  d.innerHTML=`${a.title} ${a.senha?"🔒":""}`;
+  d.onclick=()=>abrirAba(k);
+  listaAbas.appendChild(d);
+ });
+}
+
+function abrirAba(k){
+ const a=campanhas[atual].abas[k];
+ if(a.senha){
+  const s=prompt("Senha da aba:");
+  if(s!==a.senha)return alert("Senha incorreta");
+ }
+ abaTitulo.innerText=a.title;
+ abaTexto.innerText=a.text;
+ abaImg.src=a.img||"";
+ go("abaView");
+}
+
+function loginMestre(){
+ const s=prompt("Senha do mestre:");
+ if(s===SENHA_MESTRE){
+  campanhaSelect.innerHTML="";
+  Object.keys(campanhas).forEach(k=>campanhaSelect.innerHTML+=`<option>${k}</option>`);
+  go("mestre");
+ } else alert("Senha incorreta");
+}
+
+function criarCampanha(){
+ const n=novaCampanha.value.trim();
+ if(!n)return;
+ campanhas[n]=JSON.parse(JSON.stringify(template()));
+ save();
+ novaCampanha.value="";
+ alert("Campanha criada");
+}
+
+function entrarMestre(){
+ atual=campanhaSelect.value;
+ mestreCampanha.innerText=atual;
+ carregarEdicao();
+ go("painelMestre");
+}
+
+function apagarCampanha(){
+ const c=prompt("Digite APAGAR para confirmar");
+ if(c==="APAGAR"){
+  delete campanhas[atual];
+  save();
+  atual=null;
+  alert("Campanha apagada");
+  go("campanhas");
+ }
+}
+
+function carregarEdicao(){
+ personagemSelect.innerHTML="";
+ campanhas[atual].personagens.forEach((p,i)=>personagemSelect.innerHTML+=`<option value="${i}">${p.nome}</option>`);
+ personagemSelect.onchange=loadPersonagem;
+ loadPersonagem();
+
+ abaSelect.innerHTML="";
+ Object.keys(campanhas[atual].abas).forEach(k=>abaSelect.innerHTML+=`<option value="${k}">${campanhas[atual].abas[k].title}</option>`);
+ abaSelect.onchange=loadAba;
+ loadAba();
+}
+
+function loadPersonagem(){
+ const p=campanhas[atual].personagens[personagemSelect.value];
+ pNome.value=p.nome;
+ pHistoria.value=p.historia;
+ pPericias.value=p.pericias.join("\n");
+ pArmas.value=p.armas.join("\n");
+}
+
+function salvarPersonagem(){
+ const p=campanhas[atual].personagens[personagemSelect.value];
+ p.nome=pNome.value;
+ p.historia=pHistoria.value;
+ p.pericias=pPericias.value.split("\n");
+ p.armas=pArmas.value.split("\n");
+ save();
+ alert("Personagem salvo");
+ renderChars();
+}
+
+function uploadFotoPersonagem(e){
+ const r=new FileReader();
+ r.onload=()=>{
+  campanhas[atual].personagens[personagemSelect.value].foto=r.result;
+  save();
+ };
+ r.readAsDataURL(e.target.files[0]);
+}
+
+function loadAba(){
+ const a=campanhas[atual].abas[abaSelect.value];
+ aTitulo.value=a.title;
+ aTexto.value=a.text;
+ aSenha.value=a.senha;
+}
+
+function salvarAba(){
+ const a=campanhas[atual].abas[abaSelect.value];
+ a.title=aTitulo.value;
+ a.text=aTexto.value;
+ a.senha=aSenha.value;
+ save();
+ alert("Aba salva");
+ renderAbas();
+}
+
+function uploadFotoAba(e){
+ const r=new FileReader();
+ r.onload=()=>{
+  campanhas[atual].abas[abaSelect.value].img=r.result;
+  save();
+ };
+ r.readAsDataURL(e.target.files[0]);
+}
+
+function toggle(sec){
+ const map={historia:fichaHistoria,pericias:fichaPericias,armas:fichaArmas};
+ map[sec].style.display=map[sec].style.display==="none"?"block":"none";
+}
+</script>
+
+</body>
+</html>
