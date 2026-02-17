@@ -1,6 +1,4 @@
-import os, zipfile, textwrap, re, json, math, datetime
-
-full_html = r"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -19,26 +17,18 @@ button.secondary{background:#111;color:var(--white);border:1px solid var(--gold)
 button.danger{background:#400;color:#fff;border:1px solid #a00}
 .page{display:none}.page.active{display:block}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:15px}
-.char{
- background:#111;border:2px solid var(--gold);border-radius:50%;
- width:120px;height:120px;text-align:center;padding-top:10px;cursor:pointer
-}
+.char{background:#111;border:2px solid var(--gold);border-radius:50%;width:120px;height:120px;text-align:center;padding-top:10px;cursor:pointer}
 .char img{width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)}
 .card{background:#111;border:1px solid var(--gold);border-radius:10px;padding:15px;margin-bottom:15px;cursor:pointer}
-input,textarea,select{
- width:100%;background:#000;color:var(--white);
- border:1px solid var(--gold);border-radius:6px;padding:10px;margin-bottom:10px
-}
+input,textarea,select{width:100%;background:#000;color:var(--white);border:1px solid var(--gold);border-radius:6px;padding:10px;margin-bottom:10px}
 img.big{width:100%;max-height:320px;object-fit:cover;border-radius:8px;margin-bottom:10px}
 .locked{opacity:.5}
 
 /* VIDA */
 .lifeWrap{margin:10px 0 15px}
 .lifeTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px}
-.lifeBar{
- width:100%;height:18px;border:1px solid var(--gold);border-radius:999px;overflow:hidden;background:#000
-}
-.lifeFill{height:100%;width:0%}
+.lifeBar{width:100%;height:18px;border:1px solid var(--gold);border-radius:999px;overflow:hidden;background:#000}
+.lifeFill{height:100%;width:0%;background:var(--gold)}
 .lifeControls{display:flex;gap:10px;margin-top:10px}
 .lifeControls button{width:100%;padding:12px;margin:0}
 .smallNote{opacity:.8;font-size:12px;margin-top:6px}
@@ -90,19 +80,17 @@ hr.sep{border:none;border-top:1px solid #222;margin:12px 0}
 <button class="secondary" onclick="go('sistema')">⬅ Voltar</button>
 </div>
 
-<!-- FICHA -->
+<!-- FICHA (PLAYER/NPC VIEW) -->
 <div class="page" id="ficha">
 <h2 id="fichaNome"></h2>
 <img id="fichaFoto" class="big">
 
-<!-- ATRIBUTOS (VIEW) -->
 <div class="card" style="cursor:default">
   <b>🧩 Atributos</b>
   <div id="fichaAtributos" class="attrWrap"></div>
   <div class="smallNote">Todos começam em 1. Máximo por atributo: 3.</div>
 </div>
 
-<!-- VIDA (VIEW + AJUSTE) -->
 <div class="card" style="cursor:default">
   <b>❤️ Vida</b>
   <div class="lifeWrap">
@@ -110,21 +98,19 @@ hr.sep{border:none;border-top:1px solid #222;margin:12px 0}
       <div><span id="vidaAtualTxt">0</span>/<span id="vidaMaxTxt">0</span></div>
       <div id="vidaPctTxt" class="smallNote"></div>
     </div>
-    <div class="lifeBar">
-      <div id="vidaFill" class="lifeFill"></div>
-    </div>
+    <div class="lifeBar"><div id="vidaFill" class="lifeFill"></div></div>
     <div class="lifeControls">
       <button class="secondary" onclick="ajustarVida(-1)">-1</button>
       <button onclick="ajustarVida(+1)">+1</button>
     </div>
-    <div class="smallNote">Dica: isso salva automaticamente na campanha (localStorage).</div>
+    <div class="smallNote">Salva automaticamente (localStorage).</div>
   </div>
 </div>
 
 <div class="card"><b onclick="toggle('historia')">📜 História</b><p id="fichaHistoria" style="display:none"></p></div>
 <div class="card"><b onclick="toggle('pericias')">🎯 Perícias</b><ul id="fichaPericias" style="display:none"></ul></div>
 <div class="card"><b onclick="toggle('armas')">⚔️ Armas</b><ul id="fichaArmas" style="display:none"></ul></div>
-<button class="secondary" onclick="go('personagens')">⬅ Voltar</button>
+<button class="secondary" onclick="voltarDaFicha()">⬅ Voltar</button>
 </div>
 
 <!-- ABAS PLAYER -->
@@ -158,35 +144,73 @@ hr.sep{border:none;border-top:1px solid #222;margin:12px 0}
 <div class="page" id="painelMestre">
 <h2 id="mestreCampanha"></h2>
 <button onclick="go('editarPersonagens')">✏️ Editar Personagens</button>
+<button onclick="go('editarNPCs')">🧑‍🤝‍🧑 Editar NPCs</button>
 <button onclick="go('editarAbas')">🗂️ Editar Abas</button>
 <button class="danger" onclick="apagarCampanha()">🗑️ Apagar Campanha</button>
 <button class="secondary" onclick="go('campanhas')">⬅ Sair</button>
 </div>
 
-<!-- EDITAR PERSONAGENS -->
+<!-- EDITAR PERSONAGENS (JOGADORES) -->
 <div class="page" id="editarPersonagens">
-<h2>Editar Personagens</h2>
+<h2>Editar Personagens (Jogadores)</h2>
 <select id="personagemSelect"></select>
 <input id="pNome" placeholder="Nome">
 <textarea id="pHistoria" placeholder="História"></textarea>
 
 <h3>🧩 Atributos</h3>
-<div class="smallNote">Começam em 1. Você tem <b>3 pontos</b> para distribuir. Máximo por atributo: <b>3</b>.</div>
+<div class="smallNote">Base 1. Você tem <b>3 pontos</b> para distribuir. Máximo: <b>3</b>.</div>
 <div id="attrEditor" class="attrWrap"></div>
 <div class="smallNote">Pontos restantes: <b><span id="attrRestantes">3</span></b></div>
 
 <hr class="sep">
 
-<!-- VIDA (MESTRE DEFINE) -->
 <h3>❤️ Vida</h3>
 <input id="pVidaMax" type="number" min="0" step="1" placeholder="Vida máxima (inicial)">
 <input id="pVidaAtual" type="number" min="0" step="1" placeholder="Vida atual">
-<div class="smallNote">A vida atual é limitada entre 0 e a vida máxima.</div>
 
 <textarea id="pPericias" placeholder="Perícias (uma por linha)"></textarea>
 <textarea id="pArmas" placeholder="Armas (uma por linha)"></textarea>
 <input type="file" accept="image/*" onchange="uploadFotoPersonagem(event)">
 <button onclick="salvarPersonagem()">Salvar</button>
+<button class="secondary" onclick="go('painelMestre')">⬅ Voltar</button>
+</div>
+
+<!-- EDITAR NPCs (MESTRE) -->
+<div class="page" id="editarNPCs">
+<h2>Editar NPCs (Mestre)</h2>
+
+<h3>Lista de NPCs</h3>
+<div id="listaNPCsMestre"></div>
+
+<hr class="sep">
+
+<h3>Criar novo NPC</h3>
+<input id="npcNovoNome" placeholder="Nome do NPC">
+<button onclick="criarNPC()">Criar NPC</button>
+
+<hr class="sep">
+
+<h3>Editar NPC</h3>
+<select id="npcSelect"></select>
+<input id="npcNome" placeholder="Nome">
+<textarea id="npcHistoria" placeholder="História"></textarea>
+
+<h3>🧩 Atributos</h3>
+<div class="smallNote">Base 1. Você tem <b>3 pontos</b> para distribuir. Máximo: <b>3</b>.</div>
+<div id="npcAttrEditor" class="attrWrap"></div>
+<div class="smallNote">Pontos restantes: <b><span id="npcAttrRestantes">3</span></b></div>
+
+<hr class="sep">
+
+<h3>❤️ Vida</h3>
+<input id="npcVidaMax" type="number" min="0" step="1" placeholder="Vida máxima (inicial)">
+<input id="npcVidaAtual" type="number" min="0" step="1" placeholder="Vida atual">
+
+<textarea id="npcPericias" placeholder="Perícias (uma por linha)"></textarea>
+<textarea id="npcArmas" placeholder="Armas (uma por linha)"></textarea>
+<input type="file" accept="image/*" onchange="uploadFotoNPC(event)">
+<button onclick="salvarNPC()">Salvar NPC</button>
+<button class="danger" onclick="apagarNPC()">🗑️ Apagar NPC</button>
 <button class="secondary" onclick="go('painelMestre')">⬅ Voltar</button>
 </div>
 
@@ -206,374 +230,405 @@ hr.sep{border:none;border-top:1px solid #222;margin:12px 0}
 
 <script>
 const SENHA_MESTRE="animestre";
-const ATRIBUTOS = ["Força","Agilidade","Intelecto","Presença","Vigor"];
-const PONTOS_DISTRIBUIR = 3;
-const ATTR_MIN = 1;
-const ATTR_MAX = 3;
+const ATRIBUTOS=["Força","Agilidade","Intelecto","Presença","Vigor"];
+const PONTOS_DISTRIBUIR=3, ATTR_MIN=1, ATTR_MAX=3;
 
 let campanhas=JSON.parse(localStorage.getItem("septem_campaigns"))||{};
 let atual=null;
 
-// guarda o índice do personagem que está aberto na ficha
+let fichaCameFrom="personagens";
 let fichaIndex=null;
+let fichaTipo="player"; // player|npc
 
-function baseAtributos(){
-  const o={};
-  ATRIBUTOS.forEach(a=>o[a]=1);
-  return o;
-}
+function baseAtributos(){const o={}; ATRIBUTOS.forEach(a=>o[a]=1); return o;}
+function clamp(n,min,max){return Math.max(min,Math.min(max,n));}
 
-function ensurePersonagemDefaults(p){
-  // Vida
+function ensureDefaults(p){
   if(typeof p.vidaMax!=="number") p.vidaMax=10;
   if(typeof p.vidaAtual!=="number") p.vidaAtual=p.vidaMax;
-
-  // Atributos
-  if(!p.atributos || typeof p.atributos!=="object"){
-    p.atributos = baseAtributos();
-  } else {
-    ATRIBUTOS.forEach(a=>{
-      const v = parseInt(p.atributos[a],10);
-      p.atributos[a] = Number.isFinite(v) ? clamp(v, ATTR_MIN, ATTR_MAX) : ATTR_MIN;
-    });
-  }
+  if(!p.atributos || typeof p.atributos!=="object") p.atributos=baseAtributos();
+  ATRIBUTOS.forEach(a=>{
+    const v=parseInt(p.atributos[a],10);
+    p.atributos[a]=Number.isFinite(v)?clamp(v,ATTR_MIN,ATTR_MAX):ATTR_MIN;
+  });
+  if(!Array.isArray(p.pericias)) p.pericias=[];
+  if(!Array.isArray(p.armas)) p.armas=[];
+  if(typeof p.historia!=="string") p.historia="";
+  if(typeof p.nome!=="string") p.nome="Sem nome";
+  if(typeof p.foto!=="string") p.foto="";
 }
 
-function pontosRestantesAtributos(atributos){
-  const usados = ATRIBUTOS.reduce((acc,a)=> acc + (clamp(parseInt(atributos[a]||ATTR_MIN,10), ATTR_MIN, ATTR_MAX) - ATTR_MIN), 0);
-  return clamp(PONTOS_DISTRIBUIR - usados, 0, PONTOS_DISTRIBUIR);
+function pontosRestantes(atributos){
+  const usados=ATRIBUTOS.reduce((acc,a)=>acc+(clamp(parseInt(atributos[a]||ATTR_MIN,10),ATTR_MIN,ATTR_MAX)-ATTR_MIN),0);
+  return clamp(PONTOS_DISTRIBUIR-usados,0,PONTOS_DISTRIBUIR);
 }
 
 function template(){
- return {
-  personagens:[
-   {nome:"Jogador I",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
-   {nome:"Jogador II",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
-   {nome:"Jogador III",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
-   {nome:"Jogador IV",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
-   {nome:"Jogador V",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
-   {nome:"Jogador VI",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
-   {nome:"Jogador VII",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()}
-  ],
-  abas:{
-   cenarios:{title:"Cenários",text:"",img:"",senha:""},
-   npcs:{title:"NPCs",text:"",img:"",senha:""},
-   pistas:{title:"Pistas",text:"",img:"",senha:""},
-   eventos:{title:"Eventos",text:"",img:"",senha:""},
-   segredos:{title:"Segredos",text:"",img:"",senha:""}
-  }
- };
+  return {
+    personagens:[
+      {nome:"Jogador I",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
+      {nome:"Jogador II",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
+      {nome:"Jogador III",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
+      {nome:"Jogador IV",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
+      {nome:"Jogador V",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
+      {nome:"Jogador VI",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
+      {nome:"Jogador VII",historia:"",pericias:[],armas:[],foto:"",vidaMax:10,vidaAtual:10,atributos:baseAtributos()},
+    ],
+    npcs:[],
+    abas:{
+      cenarios:{title:"Cenários",text:"",img:"",senha:""},
+      npcs:{title:"NPCs",text:"",img:"",senha:""},
+      pistas:{title:"Pistas",text:"",img:"",senha:""},
+      eventos:{title:"Eventos",text:"",img:"",senha:""},
+      segredos:{title:"Segredos",text:"",img:"",senha:""}
+    }
+  };
 }
 
 function save(){localStorage.setItem("septem_campaigns",JSON.stringify(campanhas));}
 
 function go(p){
- document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
- document.getElementById(p).classList.add("active");
- if(p==="campanhas")renderCampanhas();
- if(p==="personagens")renderChars();
- if(p==="abas")renderAbas();
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+  document.getElementById(p).classList.add("active");
+  if(p==="campanhas")renderCampanhas();
+  if(p==="personagens")renderChars();
+  if(p==="abas")renderAbas();
+  if(p==="editarNPCs")carregarNPCs();
 }
 
 function renderCampanhas(){
- listaCampanhas.innerHTML="";
- Object.keys(campanhas).forEach(k=>{
-  const d=document.createElement("div");
-  d.className="card";
-  d.textContent=k;
-  d.onclick=()=>{atual=k;campanhaNome.innerText=k;go('sistema')};
-  listaCampanhas.appendChild(d);
- });
+  listaCampanhas.innerHTML="";
+  Object.keys(campanhas).forEach(k=>{
+    const d=document.createElement("div");
+    d.className="card";
+    d.textContent=k;
+    d.onclick=()=>{atual=k;campanhaNome.innerText=k;go("sistema")};
+    listaCampanhas.appendChild(d);
+  });
 }
 
 function renderChars(){
- listaPersonagens.innerHTML="";
- campanhas[atual].personagens.forEach((p,i)=>{
-  ensurePersonagemDefaults(p);
-  const d=document.createElement("div");
-  d.className="char";
-  d.innerHTML=`<img src="${p.foto||'https://via.placeholder.com/100'}"><div>${p.nome}</div>`;
-  d.onclick=()=>abrirFicha(i);
-  listaPersonagens.appendChild(d);
- });
- save();
+  listaPersonagens.innerHTML="";
+  campanhas[atual].personagens.forEach((p,i)=>{
+    ensureDefaults(p);
+    const d=document.createElement("div");
+    d.className="char";
+    d.innerHTML=`<img src="${p.foto||'https://via.placeholder.com/100'}"><div>${p.nome}</div>`;
+    d.onclick=()=>abrirFichaPlayer(i);
+    listaPersonagens.appendChild(d);
+  });
+  save();
 }
 
-function abrirFicha(i){
- fichaIndex=i;
- const p=campanhas[atual].personagens[i];
- ensurePersonagemDefaults(p);
-
- fichaNome.innerText=p.nome;
- fichaFoto.src=p.foto||"";
- fichaHistoria.innerText=p.historia;
- fichaPericias.innerHTML=p.pericias.map(x=>"<li>"+x+"</li>").join("");
- fichaArmas.innerHTML=p.armas.map(x=>"<li>"+x+"</li>").join("");
-
- renderFichaAtributos(p.atributos);
- atualizarBarraVida();
- save();
- go("ficha");
+function renderFichaAtributos(attrs){
+  fichaAtributos.innerHTML="";
+  ATRIBUTOS.forEach(a=>{
+    const row=document.createElement("div");
+    row.className="attrRow";
+    row.innerHTML=`<div class="attrName">${a}</div><div class="attrVal">${attrs[a]||1}</div>`;
+    fichaAtributos.appendChild(row);
+  });
 }
 
-function renderFichaAtributos(atributos){
- fichaAtributos.innerHTML="";
- ATRIBUTOS.forEach(a=>{
-   const row=document.createElement("div");
-   row.className="attrRow";
-   row.innerHTML=`<div class="attrName">${a}</div><div class="attrVal">${atributos[a]||1}</div>`;
-   fichaAtributos.appendChild(row);
- });
+function atualizarVidaUI(p){
+  const max=Math.max(0,parseInt(p.vidaMax||0,10));
+  const cur=clamp(parseInt(p.vidaAtual||0,10),0,max);
+  p.vidaMax=max; p.vidaAtual=cur;
+  const pct=(max<=0)?0:Math.round((cur/max)*100);
+  vidaAtualTxt.innerText=cur;
+  vidaMaxTxt.innerText=max;
+  vidaPctTxt.innerText=(max<=0)?"":(pct+"%");
+  vidaFill.style.width=pct+"%";
 }
 
-function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
+function abrirFichaPlayer(i){
+  fichaTipo="player"; fichaIndex=i; fichaCameFrom="personagens";
+  const p=campanhas[atual].personagens[i]; ensureDefaults(p);
+  fichaNome.innerText=p.nome;
+  fichaFoto.src=p.foto||"";
+  fichaHistoria.innerText=p.historia;
+  fichaPericias.innerHTML=p.pericias.map(x=>"<li>"+x+"</li>").join("");
+  fichaArmas.innerHTML=p.armas.map(x=>"<li>"+x+"</li>").join("");
+  renderFichaAtributos(p.atributos);
+  atualizarVidaUI(p);
+  save(); go("ficha");
+}
 
-function atualizarBarraVida(){
- if(fichaIndex===null) return;
- const p=campanhas[atual].personagens[fichaIndex];
- ensurePersonagemDefaults(p);
-
- const max = Math.max(0, parseInt(p.vidaMax||0,10));
- const cur = clamp(parseInt(p.vidaAtual||0,10), 0, max);
-
- // garante consistência
- p.vidaMax=max;
- p.vidaAtual=cur;
-
- const pct = (max<=0) ? 0 : Math.round((cur/max)*100);
-
- vidaAtualTxt.innerText=cur;
- vidaMaxTxt.innerText=max;
- vidaPctTxt.innerText = max<=0 ? "" : (pct + "%");
-
- vidaFill.style.width = pct + "%";
- save();
+function abrirFichaNPC(i){
+  fichaTipo="npc"; fichaIndex=i; fichaCameFrom="editarNPCs";
+  const p=campanhas[atual].npcs[i]; ensureDefaults(p);
+  fichaNome.innerText=p.nome+" (NPC)";
+  fichaFoto.src=p.foto||"";
+  fichaHistoria.innerText=p.historia;
+  fichaPericias.innerHTML=p.pericias.map(x=>"<li>"+x+"</li>").join("");
+  fichaArmas.innerHTML=p.armas.map(x=>"<li>"+x+"</li>").join("");
+  renderFichaAtributos(p.atributos);
+  atualizarVidaUI(p);
+  save(); go("ficha");
 }
 
 function ajustarVida(delta){
- if(fichaIndex===null) return;
- const p=campanhas[atual].personagens[fichaIndex];
- ensurePersonagemDefaults(p);
- const max = Math.max(0, parseInt(p.vidaMax||0,10));
- const cur = clamp(parseInt(p.vidaAtual||0,10) + delta, 0, max);
- p.vidaAtual = cur;
- atualizarBarraVida();
+  const p = (fichaTipo==="player") ? campanhas[atual].personagens[fichaIndex] : campanhas[atual].npcs[fichaIndex];
+  ensureDefaults(p);
+  const max=Math.max(0,parseInt(p.vidaMax||0,10));
+  p.vidaAtual=clamp(parseInt(p.vidaAtual||0,10)+delta,0,max);
+  atualizarVidaUI(p);
+  save();
 }
 
+function voltarDaFicha(){ go(fichaCameFrom||"personagens"); }
+
 function renderAbas(){
- listaAbas.innerHTML="";
- Object.keys(campanhas[atual].abas).forEach(k=>{
-  const a=campanhas[atual].abas[k];
-  const d=document.createElement("div");
-  d.className="card "+(a.senha?"locked":"");
-  d.innerHTML=`${a.title} ${a.senha?"🔒":""}`;
-  d.onclick=()=>abrirAba(k);
-  listaAbas.appendChild(d);
- });
+  listaAbas.innerHTML="";
+  Object.keys(campanhas[atual].abas).forEach(k=>{
+    const a=campanhas[atual].abas[k];
+    const d=document.createElement("div");
+    d.className="card "+(a.senha?"locked":"");
+    d.innerHTML=`${a.title} ${a.senha?"🔒":""}`;
+    d.onclick=()=>abrirAba(k);
+    listaAbas.appendChild(d);
+  });
 }
 
 function abrirAba(k){
- const a=campanhas[atual].abas[k];
- if(a.senha){
-  const s=prompt("Senha da aba:");
-  if(s!==a.senha)return alert("Senha incorreta");
- }
- abaTitulo.innerText=a.title;
- abaTexto.innerText=a.text;
- abaImg.src=a.img||"";
- go("abaView");
+  const a=campanhas[atual].abas[k];
+  if(a.senha){
+    const s=prompt("Senha da aba:");
+    if(s!==a.senha) return alert("Senha incorreta");
+  }
+  abaTitulo.innerText=a.title;
+  abaTexto.innerText=a.text;
+  abaImg.src=a.img||"";
+  go("abaView");
 }
 
 function loginMestre(){
- const s=prompt("Senha do mestre:");
- if(s===SENHA_MESTRE){
-  campanhaSelect.innerHTML="";
-  Object.keys(campanhas).forEach(k=>campanhaSelect.innerHTML+=`<option>${k}</option>`);
-  go("mestre");
- } else alert("Senha incorreta");
+  const s=prompt("Senha do mestre:");
+  if(s===SENHA_MESTRE){
+    campanhaSelect.innerHTML="";
+    Object.keys(campanhas).forEach(k=>campanhaSelect.innerHTML+=`<option>${k}</option>`);
+    go("mestre");
+  } else alert("Senha incorreta");
 }
 
 function criarCampanha(){
- const n=novaCampanha.value.trim();
- if(!n)return;
- campanhas[n]=JSON.parse(JSON.stringify(template()));
- save();
- novaCampanha.value="";
- alert("Campanha criada");
+  const n=(novaCampanha.value||"").trim();
+  if(!n) return;
+  campanhas[n]=JSON.parse(JSON.stringify(template()));
+  save();
+  novaCampanha.value="";
+  alert("Campanha criada");
 }
 
 function entrarMestre(){
- atual=campanhaSelect.value;
- mestreCampanha.innerText=atual;
- carregarEdicao();
- go("painelMestre");
+  atual=campanhaSelect.value;
+  if(!Array.isArray(campanhas[atual].npcs)) campanhas[atual].npcs=[];
+  mestreCampanha.innerText=atual;
+  carregarEdicao();
+  go("painelMestre");
 }
 
 function apagarCampanha(){
- const c=prompt("Digite APAGAR para confirmar");
- if(c==="APAGAR"){
-  delete campanhas[atual];
+  const c=prompt("Digite APAGAR para confirmar");
+  if(c==="APAGAR"){
+    delete campanhas[atual];
+    save();
+    atual=null;
+    alert("Campanha apagada");
+    go("campanhas");
+  }
+}
+
+function renderAttrEditor(p, containerId, restantesId){
+  ensureDefaults(p);
+  const container=document.getElementById(containerId);
+  container.innerHTML="";
+  document.getElementById(restantesId).innerText=pontosRestantes(p.atributos);
+
+  ATRIBUTOS.forEach(a=>{
+    const row=document.createElement("div");
+    row.className="attrRow";
+    row.innerHTML=`
+      <div class="attrName">${a}</div>
+      <div class="attrBtns">
+        <button class="secondary" type="button" onclick="alterarAttr('${containerId}','${restantesId}','${a}',-1)">-</button>
+        <div class="attrVal" id="${containerId}_val_${a}">${p.atributos[a]}</div>
+        <button type="button" onclick="alterarAttr('${containerId}','${restantesId}','${a}',+1)">+</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function alterarAttr(containerId, restantesId, attr, delta){
+  const p = (containerId==="attrEditor") ? campanhas[atual].personagens[personagemSelect.value] : campanhas[atual].npcs[npcSelect.value];
+  ensureDefaults(p);
+
+  const cur=clamp(parseInt(p.atributos[attr]||ATTR_MIN,10),ATTR_MIN,ATTR_MAX);
+  let rest=pontosRestantes(p.atributos);
+
+  if(delta>0){
+    if(rest<=0 || cur>=ATTR_MAX) return;
+    p.atributos[attr]=cur+1;
+  } else {
+    if(cur<=ATTR_MIN) return;
+    p.atributos[attr]=cur-1;
+  }
+
+  document.getElementById(restantesId).innerText=pontosRestantes(p.atributos);
+  document.getElementById(containerId+"_val_"+attr).innerText=p.atributos[attr];
   save();
-  atual=null;
-  alert("Campanha apagada");
-  go("campanhas");
- }
+
+  if(fichaTipo==="player" && containerId==="attrEditor" && fichaIndex===parseInt(personagemSelect.value,10)) renderFichaAtributos(p.atributos);
+  if(fichaTipo==="npc" && containerId==="npcAttrEditor" && fichaIndex===parseInt(npcSelect.value,10)) renderFichaAtributos(p.atributos);
 }
 
 function carregarEdicao(){
- personagemSelect.innerHTML="";
- campanhas[atual].personagens.forEach((p,i)=>{
-   ensurePersonagemDefaults(p);
-   personagemSelect.innerHTML+=`<option value="${i}">${p.nome}</option>`;
- });
- personagemSelect.onchange=loadPersonagem;
- loadPersonagem();
+  personagemSelect.innerHTML="";
+  campanhas[atual].personagens.forEach((p,i)=>{
+    ensureDefaults(p);
+    personagemSelect.innerHTML+=`<option value="${i}">${p.nome}</option>`;
+  });
+  personagemSelect.onchange=loadPersonagem;
+  loadPersonagem();
 
- abaSelect.innerHTML="";
- Object.keys(campanhas[atual].abas).forEach(k=>abaSelect.innerHTML+=`<option value="${k}">${campanhas[atual].abas[k].title}</option>`);
- abaSelect.onchange=loadAba;
- loadAba();
- save();
-}
+  abaSelect.innerHTML="";
+  Object.keys(campanhas[atual].abas).forEach(k=>abaSelect.innerHTML+=`<option value="${k}">${campanhas[atual].abas[k].title}</option>`);
+  abaSelect.onchange=loadAba;
+  loadAba();
 
-function renderAttrEditor(p){
- ensurePersonagemDefaults(p);
- attrEditor.innerHTML="";
- const restantes = pontosRestantesAtributos(p.atributos);
- attrRestantes.innerText = restantes;
-
- ATRIBUTOS.forEach(a=>{
-   const row=document.createElement("div");
-   row.className="attrRow";
-   const v = p.atributos[a] ?? 1;
-   row.innerHTML=`
-     <div class="attrName">${a}</div>
-     <div class="attrBtns">
-       <button class="secondary" type="button" onclick="alterarAtributo('${a}',-1)">-</button>
-       <div class="attrVal" id="val_${a}">${v}</div>
-       <button type="button" onclick="alterarAtributo('${a}',+1)">+</button>
-     </div>
-   `;
-   attrEditor.appendChild(row);
- });
-}
-
-function alterarAtributo(attr,delta){
- const p=campanhas[atual].personagens[personagemSelect.value];
- ensurePersonagemDefaults(p);
- const cur = clamp(parseInt(p.atributos[attr]||ATTR_MIN,10), ATTR_MIN, ATTR_MAX);
- let restantes = pontosRestantesAtributos(p.atributos);
-
- if(delta>0){
-   if(restantes<=0) return;
-   if(cur>=ATTR_MAX) return;
-   p.atributos[attr]=cur+1;
- } else {
-   if(cur<=ATTR_MIN) return;
-   p.atributos[attr]=cur-1;
- }
- // Recalcula e atualiza UI
- restantes = pontosRestantesAtributos(p.atributos);
- attrRestantes.innerText = restantes;
- document.getElementById("val_"+attr).innerText = p.atributos[attr];
-
- save();
-
- // Se a ficha estiver aberta no mesmo personagem, atualiza também
- if(fichaIndex===parseInt(personagemSelect.value,10)){
-   renderFichaAtributos(p.atributos);
- }
+  save();
 }
 
 function loadPersonagem(){
- const p=campanhas[atual].personagens[personagemSelect.value];
- ensurePersonagemDefaults(p);
-
- pNome.value=p.nome;
- pHistoria.value=p.historia;
- pPericias.value=p.pericias.join("\n");
- pArmas.value=p.armas.join("\n");
-
- pVidaMax.value = p.vidaMax;
- pVidaAtual.value = p.vidaAtual;
-
- renderAttrEditor(p);
+  const p=campanhas[atual].personagens[personagemSelect.value]; ensureDefaults(p);
+  pNome.value=p.nome;
+  pHistoria.value=p.historia;
+  pPericias.value=p.pericias.join("\n");
+  pArmas.value=p.armas.join("\n");
+  pVidaMax.value=p.vidaMax;
+  pVidaAtual.value=p.vidaAtual;
+  renderAttrEditor(p,"attrEditor","attrRestantes");
 }
 
 function salvarPersonagem(){
- const p=campanhas[atual].personagens[personagemSelect.value];
- ensurePersonagemDefaults(p);
-
- p.nome=pNome.value;
- p.historia=pHistoria.value;
-
- // Vida
- const max = Math.max(0, parseInt(pVidaMax.value||0,10));
- const cur = clamp(parseInt(pVidaAtual.value||0,10), 0, max);
- p.vidaMax = max;
- p.vidaAtual = cur;
-
- // Atributos: garante limites e pontos
- ATRIBUTOS.forEach(a=>{
-   const v = clamp(parseInt(p.atributos[a]||ATTR_MIN,10), ATTR_MIN, ATTR_MAX);
-   p.atributos[a]=v;
- });
- const restantes = pontosRestantesAtributos(p.atributos);
- if(restantes<0){
-   alert("Atributos inválidos (pontos excedidos). Ajuste antes de salvar.");
-   return;
- }
-
- // Listas
- p.pericias=pPericias.value.split("\n").map(x=>x.trim()).filter(Boolean);
- p.armas=pArmas.value.split("\n").map(x=>x.trim()).filter(Boolean);
-
- save();
- alert("Personagem salvo");
- renderChars();
+  const p=campanhas[atual].personagens[personagemSelect.value]; ensureDefaults(p);
+  p.nome=pNome.value.trim()||"Jogador";
+  p.historia=pHistoria.value;
+  const vmax=Math.max(0,parseInt(pVidaMax.value||0,10));
+  const vatual=clamp(parseInt(pVidaAtual.value||0,10),0,vmax);
+  p.vidaMax=vmax; p.vidaAtual=vatual;
+  p.pericias=pPericias.value.split("\n").map(x=>x.trim()).filter(Boolean);
+  p.armas=pArmas.value.split("\n").map(x=>x.trim()).filter(Boolean);
+  save(); alert("Personagem salvo"); renderChars();
 }
 
 function uploadFotoPersonagem(e){
- const r=new FileReader();
- r.onload=()=>{
-  campanhas[atual].personagens[personagemSelect.value].foto=r.result;
-  save();
- };
- r.readAsDataURL(e.target.files[0]);
+  const r=new FileReader();
+  r.onload=()=>{campanhas[atual].personagens[personagemSelect.value].foto=r.result; save();};
+  r.readAsDataURL(e.target.files[0]);
 }
 
+/* NPCs */
+function carregarNPCs(){
+  if(!Array.isArray(campanhas[atual].npcs)) campanhas[atual].npcs=[];
+  listaNPCsMestre.innerHTML="";
+  campanhas[atual].npcs.forEach((n,i)=>{
+    ensureDefaults(n);
+    const d=document.createElement("div");
+    d.className="card";
+    d.innerHTML=`<b>${n.nome}</b> <span class="smallNote">(toque para ver ficha)</span>`;
+    d.onclick=()=>abrirFichaNPC(i);
+    listaNPCsMestre.appendChild(d);
+  });
+
+  npcSelect.innerHTML="";
+  campanhas[atual].npcs.forEach((n,i)=>npcSelect.innerHTML+=`<option value="${i}">${n.nome}</option>`);
+  npcSelect.onchange=loadNPC;
+
+  if(campanhas[atual].npcs.length>0) loadNPC();
+  else {
+    npcNome.value=""; npcHistoria.value=""; npcPericias.value=""; npcArmas.value="";
+    npcVidaMax.value=""; npcVidaAtual.value=""; npcAttrEditor.innerHTML="";
+    npcAttrRestantes.innerText=PONTOS_DISTRIBUIR;
+  }
+  save();
+}
+
+function criarNPC(){
+  const nome=(npcNovoNome.value||"").trim();
+  if(!nome) return alert("Digite um nome para o NPC.");
+  campanhas[atual].npcs.push({nome, historia:"", pericias:[], armas:[], foto:"", vidaMax:10, vidaAtual:10, atributos:baseAtributos()});
+  npcNovoNome.value="";
+  save(); alert("NPC criado"); carregarNPCs();
+}
+
+function loadNPC(){
+  if(!campanhas[atual].npcs.length) return;
+  const n=campanhas[atual].npcs[npcSelect.value]; ensureDefaults(n);
+  npcNome.value=n.nome;
+  npcHistoria.value=n.historia;
+  npcPericias.value=n.pericias.join("\n");
+  npcArmas.value=n.armas.join("\n");
+  npcVidaMax.value=n.vidaMax;
+  npcVidaAtual.value=n.vidaAtual;
+  renderAttrEditor(n,"npcAttrEditor","npcAttrRestantes");
+}
+
+function salvarNPC(){
+  if(!campanhas[atual].npcs.length) return;
+  const n=campanhas[atual].npcs[npcSelect.value]; ensureDefaults(n);
+  n.nome=npcNome.value.trim()||"NPC";
+  n.historia=npcHistoria.value;
+  const vmax=Math.max(0,parseInt(npcVidaMax.value||0,10));
+  const vatual=clamp(parseInt(npcVidaAtual.value||0,10),0,vmax);
+  n.vidaMax=vmax; n.vidaAtual=vatual;
+  n.pericias=npcPericias.value.split("\n").map(x=>x.trim()).filter(Boolean);
+  n.armas=npcArmas.value.split("\n").map(x=>x.trim()).filter(Boolean);
+  save(); alert("NPC salvo"); carregarNPCs();
+}
+
+function uploadFotoNPC(e){
+  if(!campanhas[atual].npcs.length) return;
+  const r=new FileReader();
+  r.onload=()=>{campanhas[atual].npcs[npcSelect.value].foto=r.result; save();};
+  r.readAsDataURL(e.target.files[0]);
+}
+
+function apagarNPC(){
+  if(!campanhas[atual].npcs.length) return;
+  const n=campanhas[atual].npcs[npcSelect.value];
+  const c=prompt(`Digite APAGAR para remover o NPC "${n.nome}"`);
+  if(c==="APAGAR"){
+    campanhas[atual].npcs.splice(parseInt(npcSelect.value,10),1);
+    save(); alert("NPC apagado"); carregarNPCs();
+  }
+}
+
+/* Abas */
 function loadAba(){
- const a=campanhas[atual].abas[abaSelect.value];
- aTitulo.value=a.title;
- aTexto.value=a.text;
- aSenha.value=a.senha;
+  const a=campanhas[atual].abas[abaSelect.value];
+  aTitulo.value=a.title; aTexto.value=a.text; aSenha.value=a.senha;
 }
-
 function salvarAba(){
- const a=campanhas[atual].abas[abaSelect.value];
- a.title=aTitulo.value;
- a.text=aTexto.value;
- a.senha=aSenha.value;
- save();
- alert("Aba salva");
- renderAbas();
+  const a=campanhas[atual].abas[abaSelect.value];
+  a.title=aTitulo.value; a.text=aTexto.value; a.senha=aSenha.value;
+  save(); alert("Aba salva"); renderAbas();
 }
-
 function uploadFotoAba(e){
- const r=new FileReader();
- r.onload=()=>{
-  campanhas[atual].abas[abaSelect.value].img=r.result;
-  save();
- };
- r.readAsDataURL(e.target.files[0]);
+  const r=new FileReader();
+  r.onload=()=>{campanhas[atual].abas[abaSelect.value].img=r.result; save();};
+  r.readAsDataURL(e.target.files[0]);
 }
 
 function toggle(sec){
- const map={historia:fichaHistoria,pericias:fichaPericias,armas:fichaArmas};
- map[sec].style.display=map[sec].style.display==="none"?"block":"none";
+  const map={historia:fichaHistoria,pericias:fichaPericias,armas:fichaArmas};
+  map[sec].style.display=(map[sec].style.display==="none")?"block":"none";
 }
+
+// inicializa vazio
+if(Object.keys(campanhas).length===0){ save(); }
 </script>
 
 </body>
 </html>
-
