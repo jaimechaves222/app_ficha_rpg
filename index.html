@@ -38,6 +38,7 @@ h1{
   font-size:32px;
   letter-spacing:3px;
   text-transform:uppercase;
+  user-select:none;
 }
 
 .subtitle{
@@ -100,18 +101,15 @@ button:hover{
   color:#000;
 }
 
-/* BOTÃO SECRETO */
-.footer-secret{
+/* Rodapé "nota" discreta (não clicável) */
+.footer-note{
+  width:100%;
   text-align:center;
-  padding:12px;
+  padding:10px 0 14px;
   font-size:10px;
-  opacity:0.15;
-  cursor:pointer;
-  transition:.3s;
-}
-
-.footer-secret:hover{
-  opacity:0.4;
+  opacity:.12;
+  letter-spacing:.2em;
+  user-select:none;
 }
 </style>
 </head>
@@ -119,7 +117,8 @@ button:hover{
 <body>
 <div class="wrap">
 
-  <h1>Projeto Septem</h1>
+  <!-- Toque 7x aqui para liberar -->
+  <h1 id="tituloSeptem">Projeto Septem</h1>
   <div class="subtitle">Contagem regressiva até 10 de agosto de 2026</div>
 
   <div class="box">
@@ -143,20 +142,19 @@ button:hover{
     </div>
 
     <div class="done" id="done">
-      <h2>O tempo foi concluído.</h2>
+      <h2 style="margin:18px 0 0; color:var(--gold)">O tempo foi concluído.</h2>
       <button onclick="irParaArquivoFicha()">Acessar arquivo_ficha</button>
     </div>
   </div>
 
 </div>
 
-<!-- RODAPÉ SECRETO -->
-<div class="footer-secret" onclick="acessoSecreto()">
-  septem
-</div>
+<div class="footer-note">septem</div>
 
 <script>
 const SENHA_MESTRE = "animestre";
+
+// Data final: 10 de agosto de 2026, 00:00 no horário local do dispositivo
 const alvo = new Date(2026,7,10,0,0,0);
 
 const dd=document.getElementById("dd");
@@ -195,18 +193,32 @@ function tick(){
 }
 
 function irParaArquivoFicha(){
+  // leva para a página do mestre
   window.location.href="arquivo_ficha.html";
 }
 
-/* BOTÃO SECRETO DO MESTRE */
-function acessoSecreto(){
-  const senha = prompt("Acesso restrito. Digite a senha do mestre:");
-  if(senha === SENHA_MESTRE){
-    window.location.href="arquivo_ficha.html";
-  } else {
-    alert("Acesso negado.");
+/* 🔒 Acesso secreto: 7 toques no título */
+let taps = 0;
+let janela = null;
+
+const titulo = document.getElementById("tituloSeptem");
+titulo.addEventListener("click", () => {
+  taps++;
+
+  // reinicia se ficar muito tempo sem clicar
+  clearTimeout(janela);
+  janela = setTimeout(() => (taps = 0), 2000);
+
+  if(taps >= 7){
+    taps = 0;
+    clearTimeout(janela);
+
+    const senha = prompt("Acesso restrito. Senha do mestre:");
+    if(senha === SENHA_MESTRE){
+      window.location.href = "arquivo_ficha.html";
+    }
   }
-}
+});
 
 tick();
 </script>
