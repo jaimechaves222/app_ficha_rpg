@@ -18,6 +18,7 @@ body{
   background:var(--bg);
   color:var(--gold);
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
   min-height:100vh;
@@ -26,6 +27,10 @@ body{
 .wrap{
   width:min(700px,92vw);
   text-align:center;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
 }
 
 h1{
@@ -95,6 +100,19 @@ button:hover{
   color:#000;
 }
 
+/* BOTÃO SECRETO */
+.footer-secret{
+  text-align:center;
+  padding:12px;
+  font-size:10px;
+  opacity:0.15;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.footer-secret:hover{
+  opacity:0.4;
+}
 </style>
 </head>
 
@@ -132,7 +150,13 @@ button:hover{
 
 </div>
 
+<!-- RODAPÉ SECRETO -->
+<div class="footer-secret" onclick="acessoSecreto()">
+  septem
+</div>
+
 <script>
+const SENHA_MESTRE = "animestre";
 const alvo = new Date(2026,7,10,0,0,0);
 
 const dd=document.getElementById("dd");
@@ -171,11 +195,17 @@ function tick(){
 }
 
 function irParaArquivoFicha(){
-  if(typeof window.go==="function"){
-    window.go("arquivo_ficha");
-    return;
-  }
   window.location.href="arquivo_ficha.html";
+}
+
+/* BOTÃO SECRETO DO MESTRE */
+function acessoSecreto(){
+  const senha = prompt("Acesso restrito. Digite a senha do mestre:");
+  if(senha === SENHA_MESTRE){
+    window.location.href="arquivo_ficha.html";
+  } else {
+    alert("Acesso negado.");
+  }
 }
 
 tick();
