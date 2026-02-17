@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projeto Septem – Contagem</title>
+
+<style>
+:root{
+  --gold:#d4af37;
+  --gold-strong:#f1c95b;
+  --bg:#000000;
+}
+
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:var(--bg);
+  color:var(--gold);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+}
+
+.wrap{
+  width:min(700px,92vw);
+  text-align:center;
+}
+
+h1{
+  margin:0 0 10px;
+  font-size:32px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+}
+
+.subtitle{
+  margin-bottom:25px;
+  font-size:14px;
+  opacity:.8;
+}
+
+.box{
+  border:2px solid var(--gold);
+  border-radius:18px;
+  padding:25px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:15px;
+}
+
+.cell{
+  border:2px solid var(--gold);
+  border-radius:14px;
+  padding:18px 10px;
+}
+
+.num{
+  font-size:36px;
+  font-weight:900;
+  color:var(--gold-strong);
+}
+
+.lbl{
+  margin-top:6px;
+  font-size:12px;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+}
+
+.done{
+  margin-top:20px;
+  display:none;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  margin-top:18px;
+  background:transparent;
+  border:2px solid var(--gold);
+  color:var(--gold);
+  font-weight:bold;
+  border-radius:12px;
+  cursor:pointer;
+  transition:.2s;
+}
+
+button:hover{
+  background:var(--gold);
+  color:#000;
+}
+
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <h1>Projeto Septem</h1>
+  <div class="subtitle">Contagem regressiva até 10 de agosto de 2026</div>
+
+  <div class="box">
+    <div class="grid">
+      <div class="cell">
+        <div class="num" id="dd">--</div>
+        <div class="lbl">Dias</div>
+      </div>
+      <div class="cell">
+        <div class="num" id="hh">--</div>
+        <div class="lbl">Horas</div>
+      </div>
+      <div class="cell">
+        <div class="num" id="mm">--</div>
+        <div class="lbl">Min</div>
+      </div>
+      <div class="cell">
+        <div class="num" id="ss">--</div>
+        <div class="lbl">Seg</div>
+      </div>
+    </div>
+
+    <div class="done" id="done">
+      <h2>O tempo foi concluído.</h2>
+      <button onclick="irParaArquivoFicha()">Acessar arquivo_ficha</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const alvo = new Date(2026,7,10,0,0,0);
+
+const dd=document.getElementById("dd");
+const hh=document.getElementById("hh");
+const mm=document.getElementById("mm");
+const ss=document.getElementById("ss");
+const done=document.getElementById("done");
+
+function pad(n){return String(n).padStart(2,"0");}
+
+function tick(){
+  const agora=new Date();
+  const diff=alvo-agora;
+
+  if(diff<=0){
+    dd.textContent="00";
+    hh.textContent="00";
+    mm.textContent="00";
+    ss.textContent="00";
+    done.style.display="block";
+    return;
+  }
+
+  const total=Math.floor(diff/1000);
+  const dias=Math.floor(total/86400);
+  const horas=Math.floor((total%86400)/3600);
+  const mins=Math.floor((total%3600)/60);
+  const segs=total%60;
+
+  dd.textContent=pad(dias);
+  hh.textContent=pad(horas);
+  mm.textContent=pad(mins);
+  ss.textContent=pad(segs);
+
+  setTimeout(tick,250);
+}
+
+function irParaArquivoFicha(){
+  if(typeof window.go==="function"){
+    window.go("arquivo_ficha");
+    return;
+  }
+  window.location.href="arquivo_ficha.html";
+}
+
+tick();
+</script>
+
+</body>
+</html>
