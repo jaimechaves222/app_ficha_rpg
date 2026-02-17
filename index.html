@@ -12,25 +12,23 @@
   --bg:#000000;
 }
 
+*{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:Arial, sans-serif;
   background:var(--bg);
   color:var(--gold);
+  min-height:100vh;
   display:flex;
   flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  min-height:100vh;
 }
 
 .wrap{
-  width:min(700px,92vw);
+  width:min(720px,92vw);
+  margin:auto;
   text-align:center;
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
+  padding:22px 0;
 }
 
 h1{
@@ -42,44 +40,48 @@ h1{
 }
 
 .subtitle{
-  margin-bottom:25px;
+  margin:0 0 18px;
   font-size:14px;
-  opacity:.8;
+  opacity:.85;
 }
 
 .box{
   border:2px solid var(--gold);
   border-radius:18px;
-  padding:25px;
+  padding:22px;
 }
 
 .grid{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:15px;
+  grid-template-columns:repeat(4, 1fr);
+  gap:14px;
 }
 
 .cell{
   border:2px solid var(--gold);
   border-radius:14px;
-  padding:18px 10px;
+  padding:16px 10px;
+  min-width:0;
 }
 
 .num{
   font-size:36px;
   font-weight:900;
   color:var(--gold-strong);
+  line-height:1;
+  white-space:nowrap;
 }
 
 .lbl{
-  margin-top:6px;
+  margin-top:8px;
   font-size:12px;
   letter-spacing:.15em;
   text-transform:uppercase;
+  opacity:.9;
 }
 
 .done{
-  margin-top:20px;
+  margin-top:18px;
   display:none;
 }
 
@@ -90,7 +92,7 @@ button{
   background:transparent;
   border:2px solid var(--gold);
   color:var(--gold);
-  font-weight:bold;
+  font-weight:800;
   border-radius:12px;
   cursor:pointer;
   transition:.2s;
@@ -101,7 +103,6 @@ button:hover{
   color:#000;
 }
 
-/* Rodapé "nota" discreta (não clicável) */
 .footer-note{
   width:100%;
   text-align:center;
@@ -111,6 +112,47 @@ button:hover{
   letter-spacing:.2em;
   user-select:none;
 }
+
+/* ✅ Ajustes MOBILE */
+@media (max-width: 520px){
+  .wrap{
+    width:92vw;
+    padding:18px 0;
+  }
+  h1{
+    font-size:26px;
+    letter-spacing:2px;
+  }
+  .subtitle{
+    font-size:12px;
+    margin-bottom:14px;
+  }
+  .box{
+    padding:16px;
+    border-radius:16px;
+  }
+  .grid{
+    grid-template-columns:repeat(2, 1fr); /* 2x2 no celular */
+    gap:12px;
+  }
+  .cell{
+    padding:14px 10px;
+    border-radius:12px;
+  }
+  .num{
+    font-size:30px;
+  }
+  .lbl{
+    font-size:11px;
+    letter-spacing:.12em;
+  }
+}
+
+/* ✅ Ajustes EXTRA pequeno */
+@media (max-width: 360px){
+  .num{ font-size:26px; }
+  .cell{ padding:12px 8px; }
+}
 </style>
 </head>
 
@@ -119,7 +161,7 @@ button:hover{
 
   <!-- Toque 7x aqui para liberar -->
   <h1 id="tituloSeptem">Projeto Septem</h1>
-  <div class="subtitle"></div>
+  <div class="subtitle">Contagem regressiva até 10 de agosto de 2026</div>
 
   <div class="box">
     <div class="grid">
@@ -153,9 +195,7 @@ button:hover{
 
 <script>
 const SENHA_MESTRE = "animestre";
-
-// Data final: 10 de agosto de 2026, 00:00 no horário local do dispositivo
-const alvo = new Date(2026,7,10,0,0,0);
+const alvo = new Date(2026,7,10,0,0,0); // 10/08/2026 00:00
 
 const dd=document.getElementById("dd");
 const hh=document.getElementById("hh");
@@ -163,56 +203,49 @@ const mm=document.getElementById("mm");
 const ss=document.getElementById("ss");
 const done=document.getElementById("done");
 
-function pad(n){return String(n).padStart(2,"0");}
+function pad(n){ return String(n).padStart(2,"0"); }
 
 function tick(){
-  const agora=new Date();
-  const diff=alvo-agora;
+  const agora = new Date();
+  const diff = alvo - agora;
 
-  if(diff<=0){
-    dd.textContent="00";
-    hh.textContent="00";
-    mm.textContent="00";
-    ss.textContent="00";
+  if(diff <= 0){
+    dd.textContent="00"; hh.textContent="00"; mm.textContent="00"; ss.textContent="00";
     done.style.display="block";
     return;
   }
 
-  const total=Math.floor(diff/1000);
-  const dias=Math.floor(total/86400);
-  const horas=Math.floor((total%86400)/3600);
-  const mins=Math.floor((total%3600)/60);
-  const segs=total%60;
+  const total = Math.floor(diff/1000);
+  const dias  = Math.floor(total/86400);
+  const horas = Math.floor((total%86400)/3600);
+  const mins  = Math.floor((total%3600)/60);
+  const segs  = total%60;
 
-  dd.textContent=pad(dias);
-  hh.textContent=pad(horas);
-  mm.textContent=pad(mins);
-  ss.textContent=pad(segs);
+  dd.textContent = pad(dias);
+  hh.textContent = pad(horas);
+  mm.textContent = pad(mins);
+  ss.textContent = pad(segs);
 
-  setTimeout(tick,250);
+  setTimeout(tick, 250);
 }
 
 function irParaArquivoFicha(){
-  // leva para a página do mestre
   window.location.href="arquivo_ficha.html";
 }
 
 /* 🔒 Acesso secreto: 7 toques no título */
 let taps = 0;
 let janela = null;
-
 const titulo = document.getElementById("tituloSeptem");
+
 titulo.addEventListener("click", () => {
   taps++;
-
-  // reinicia se ficar muito tempo sem clicar
   clearTimeout(janela);
   janela = setTimeout(() => (taps = 0), 2000);
 
   if(taps >= 7){
     taps = 0;
     clearTimeout(janela);
-
     const senha = prompt("Acesso restrito. Senha do mestre:");
     if(senha === SENHA_MESTRE){
       window.location.href = "arquivo_ficha.html";
